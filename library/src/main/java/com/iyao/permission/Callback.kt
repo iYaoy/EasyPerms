@@ -5,6 +5,9 @@ import kotlinx.android.parcel.Parcelize
 
 @Parcelize
 open class Callback: Parcelable {
-    open fun onPermissionGranted(allGranted: Boolean, vararg grantedPermissions: String) {}
-    open fun onPermissionDenied(allDenied: Boolean, vararg deniedPermissions: String) {}
+    open fun onGrantPermissionStart(shouldGrantPerms: Array<String>, goon: ()->Unit): Boolean { return false }
+    open fun onShowRequestPermissionsRationale(rationalePerms: Array<String>, goon: ()->Unit): Boolean { return false }
+    open fun onPermissionGranted(allGranted: Boolean, grantedPerms: Array<String>) {}
+    open fun onPermissionDenied(allDenied: Boolean, deniedPerms: Array<String>) {}
+    open fun onRequestCanceled(requestCode: Int) {}
 }
