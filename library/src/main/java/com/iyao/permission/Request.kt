@@ -7,16 +7,17 @@ import java.util.function.BiFunction
 import kotlin.properties.Delegates
 
 @Parcelize
-class Request private constructor(val code: Int, val checkWithOps: Boolean, val permissions: Array<String>, private val realCallback: Callback?): Parcelable {
+class Request private constructor(val code: Int, val checkWithOps: Boolean, val turnToSettings: Boolean, val permissions: Array<String>, private val realCallback: Callback?): Parcelable {
 
     @IgnoredOnParcel
     val callback by lazy {
         object: Callback() {
-            override fun onGrantPermissionStart(shouldGrantPerms: Array<String>, goon: () -> Unit): Boolean {
-                return realCallback?.onGrantPermissionStart(shouldGrantPerms, goon) ?: false
+            override fun onGrantPermissionStart(requestManager: RequestManager, shouldGrantPerms: Array<String>): Boolean {
+                return realCallback?.onGrantPermissionStart(requestManager, shouldGrantPerms) ?: false
             }
-            override fun onShowRequestPermissionsRationale(rationalePerms: Array<String>, goon: () -> Unit): Boolean {
-                return realCallback?.onShowRequestPermissionsRationale(rationalePerms, goon) ?: false
+
+            override fun onShowRequestPermissionsRationale(requestManager: RequestManager, rationalePerms: Array<String>): Boolean {
+                return realCallback?.onShowRequestPermissionsRationale(requestManager, rationalePerms) ?: false
             }
             override fun onPermissionGranted(allGranted: Boolean, grantedPerms: Array<String>) {
                 realCallback?.onPermissionGranted(allGranted, grantedPerms)
@@ -35,6 +36,7 @@ class Request private constructor(val code: Int, val checkWithOps: Boolean, val 
     class Builder(private val requestManager: RequestManager) {
         private var requestCode = 100
         private var checkWithOps = false
+        private var turnToSettings = false
         private var permissions: Array<String> by Delegates.notNull()
 
         fun requestCode(code: Int): Builder {
@@ -47,13 +49,18 @@ class Request private constructor(val code: Int, val checkWithOps: Boolean, val 
             return this
         }
 
+        fun turnToSettingsWhenDoNotAskAgain(turnToSettings: Boolean): Builder {
+            this.turnToSettings = turnToSettings
+            return this
+        }
+
         fun permissions(vararg permissions: String): Builder {
             this.permissions = permissions.toList().toTypedArray()
             return this
         }
 
         fun check(callback: Callback? = null) {
-            val request = Request(requestCode, checkWithOps, permissions, callback)
+            val request = Request(requestCode, checkWithOps, turnToSettings, permissions, callback)
             requestManager.request(request)
         }
     }

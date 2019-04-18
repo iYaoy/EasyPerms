@@ -28,7 +28,15 @@ class RequestManager private constructor(private val requestFragment: RequestFra
         }
     }
 
-    fun request(request: Request) {
+    fun requestOnStart() {
+        requestFragment.requestOnStart()
+    }
+
+    fun requestOnShowRationale() {
+        requestFragment.requestOnShowRationale()
+    }
+
+    internal fun request(request: Request) {
         requestFragment.request(request)
     }
 }
