@@ -3,10 +3,13 @@ package com.iyao.permission
 import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.net.Uri
 import android.os.Bundle
 import android.os.Process
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import java.util.*
@@ -29,11 +32,10 @@ class RequestFragment : Fragment() {
             hasCurrentPermissionsRequest = true
             val shouldGrantPerms = shouldGrantPermissions(activity, request.permissions, request.checkWithOps)
             if (shouldGrantPerms.isNotEmpty()) {
-                val rationalePerms = shouldShowRequestRationalePermissions(shouldGrantPerms)
                 if (!request.callback.onGrantPermissionStart(shouldGrantPerms) {
-                        doShouldShowRequestPermissionsRationale(request, rationalePerms)
+                        doShouldShowSettings(request, shouldGrantPerms)
                     }) {
-                    doShouldShowRequestPermissionsRationale(request, rationalePerms)
+                    doShouldShowSettings(request, shouldGrantPerms)
                 }
             } else {
                 request.callback.onPermissionGranted(true, request.permissions)
@@ -47,13 +49,28 @@ class RequestFragment : Fragment() {
         }
     }
 
-    private fun doShouldShowRequestPermissionsRationale(request: Request, rationalePerms: Array<String>) {
+    private fun doShouldShowSettings(request: Request, shouldGrantPerms: Array<String>) {
+        val rationalePerms = shouldShowRequestRationalePermissions(shouldGrantPerms)
+        if (rationalePerms.size < shouldGrantPerms.size) {
+            val activity = activity ?: return
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            val uri = Uri.fromParts("package", activity.packageName, null)
+            intent.data = uri
+            startActivityForResult(intent, CODE_SETTINGS)
+        } else {
+            doShouldShowRequestPermissionsRationale(request)
+        }
+    }
+
+    private fun doShouldShowRequestPermissionsRationale(request: Request) {
+        val rationalePerms = shouldShowRequestRationalePermissions(request.permissions)
         if (rationalePerms.isEmpty() || !request.callback.onShowRequestPermissionsRationale(rationalePerms) {
                 realRequest(request)
             }) {
             realRequest(request)
         }
     }
+
     private fun realRequest(request: Request) {
         if (!isDetached && host != null) {
             requestPermissions(request.permissions, request.code)
@@ -62,6 +79,7 @@ class RequestFragment : Fragment() {
             hasCurrentPermissionsRequest = false
         }
     }
+
     private fun shouldGrantPermissions(context: Context, permissions: Array<out String>, checkWithOps: Boolean): Array<String> {
         return permissions.filter { !checkPermission(context, it, checkWithOps) }.toTypedArray()
     }
@@ -80,6 +98,13 @@ class RequestFragment : Fragment() {
             Process.myUid(),
             context.packageName
         ) == MODE_ALLOWED)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val request = request
+        if (request != null && CODE_SETTINGS == requestCode) {
+            doShouldShowRequestPermissionsRationale(request)
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -139,6 +164,7 @@ class RequestFragment : Fragment() {
     }
 
     companion object {
+        const val CODE_SETTINGS = 0x01
         const val STATE_REQUEST = "request"
         const val STATE_HAS_CURRENT_REQUEST = "hasCurrentRequest"
     }
