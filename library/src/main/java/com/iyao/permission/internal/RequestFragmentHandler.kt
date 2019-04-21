@@ -1,4 +1,4 @@
-package com.iyao.permission
+package com.iyao.permission.internal
 
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
@@ -31,10 +31,20 @@ class RequestFragmentHandler : Fragment(), PermissionsRequestHandler {
     }
 
     override fun requestPermissions(requestCode: Int, vararg permissions: String) {
-        requestPermissions(permissions, requestCode)
+        if (isAdded) {
+            requestPermissions(permissions, requestCode)
+        } else {
+            resultCallback?.onRequestPermissionsResult(requestCode, arrayOf(), IntArray(0))
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         resultCallback?.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        manager = null
+        resultCallback = null
     }
 }

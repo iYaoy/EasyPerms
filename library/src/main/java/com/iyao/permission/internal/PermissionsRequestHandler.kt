@@ -1,4 +1,4 @@
-package com.iyao.permission
+package com.iyao.permission.internal
 
 import androidx.core.app.ActivityCompat
 

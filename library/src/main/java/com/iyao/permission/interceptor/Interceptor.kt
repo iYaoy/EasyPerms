@@ -1,7 +1,7 @@
 package com.iyao.permission.interceptor
 
-import com.iyao.permission.PermissionsRequestHandler
-import com.iyao.permission.Request
+import com.iyao.permission.internal.PermissionsRequestHandler
+import com.iyao.permission.internal.Request
 
 interface Interceptor {
 
